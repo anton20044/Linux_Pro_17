@@ -1,0 +1,107 @@
+---
+- name: Update cache
+  apt:
+    update_cache=yes cache_valid_time=3600
+  tags:
+    - pam
+
+- name: Install pak for docker
+  ansible.builtin.apt:
+    pkg:
+    - curl
+    - ca-certificates
+  tags:
+    - docker
+
+- name: Add key
+  ansible.builtin.shell: install -m 0755 -d /etc/apt/keyrings
+  tags:
+    - docker
+
+- name: Add key 2
+  ansible.builtin.shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+  tags:
+    - docker
+
+- name: Add key 3
+  ansible.builtin.shell: chmod a+r /etc/apt/keyrings/docker.asc
+  tags:
+    - docker
+
+- name: Add key 4
+  ansible.builtin.shell: echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  tags:
+    - docker
+
+- name: Update cache
+  apt:
+    update_cache=yes
+  tags:
+    - docker
+
+
+- name: Install pak
+  ansible.builtin.apt:
+    pkg:
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+    - docker-buildx-plugin
+    - docker-compose-plugin
+  tags:
+    - pam
+
+
+- name: Create group admin
+  ansible.builtin.group:
+    name: admin
+    state: present
+  tags:
+    - pam
+
+
+- name: Add user otus
+  ansible.builtin.user:
+    name: otus
+    shell: /bin/bash
+    password: $y$j9T$KF.Xyw88s/FV.b9S02YtE.$X16njfJcxUIMia.P1sX6DhNJ1pfqhJWebXOzsFkp/b0
+    create_home: yes
+  tags:
+    - pam
+
+
+- name: Add user otusadm
+  ansible.builtin.user:
+    name: otusadm
+    shell: /bin/bash
+    password: $y$j9T$KF.Xyw88s/FV.b9S02YtE.$X16njfJcxUIMia.P1sX6DhNJ1pfqhJWebXOzsFkp/b0
+    create_home: yes
+    groups: admin, docker
+    append: yes
+  tags:
+    - pam
+    - docker
+
+
+- name: Copy shell script
+  template:
+    src: sc.sh
+    dest: /usr/local/bin/login.sh
+    mode: +x
+  tags:
+    - pam
+
+
+- name: Add server strings
+  lineinfile:
+    path: "/etc/pam.d/sshd"
+    line: 'auth required pam_exec.so debug /usr/local/bin/login.sh'
+  tags:
+    - pam
+
+- name: Copy policy kit
+  template:
+    src: polkit_docker
+    dest: /etc/polkit-1/localauthority.conf.d/docker-restart.rules
+  tags:
+    - docker
