@@ -82,6 +82,13 @@
     - pam
     - docker
 
+- name: Add user vagrant in group
+  ansible.builtin.user:
+    name: vagrant
+    groups: admin
+  tags:
+    - pam
+
 
 - name: Copy shell script
   template:
@@ -95,6 +102,7 @@
 - name: Add server strings
   lineinfile:
     path: "/etc/pam.d/sshd"
+    insertbefore: "@include common-auth"
     line: 'auth required pam_exec.so debug /usr/local/bin/login.sh'
   tags:
     - pam

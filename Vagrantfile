@@ -1,9 +1,9 @@
 MACHINES = {
   :"pam" => {
-              :box_name => "jammy",
+              :box_name => "ubuntu/jammy64",
               :cpus => 2,
               :memory => 1024,
-              :ip => "192.168.57.190",
+              :ip => "192.168.56.10",
             }
 }
 
